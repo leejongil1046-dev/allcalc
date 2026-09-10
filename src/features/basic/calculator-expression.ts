@@ -1,8 +1,9 @@
 const precedence: Record<string, number> = {
   "+": 1,
-  "-": 1,
+  "−": 1,
   "×": 2,
   "÷": 2,
+  "%": 2,
 };
 
 function normalizeResult(value: number) {
@@ -10,17 +11,24 @@ function normalizeResult(value: number) {
 }
 
 export function calculateExpression(expression: string): number | null {
-  const tokens = expression.match(/\d+(?:\.\d+)?|[+\-×÷]/g);
+  const normalizedExpression = expression.replace(
+    /\(-(\d+(?:\.\d+)?)\)/g,
+    "-$1",
+  );
+
+  const tokens = normalizedExpression.match(/-?\d+(?:\.\d+)?|[+−×÷%]/g);
 
   if (!tokens) {
     return null;
   }
 
   const values: number[] = [];
+
   const operators: string[] = [];
 
   const calculate = () => {
     const operator = operators.pop();
+
     const right = values.pop();
     const left = values.pop();
 
@@ -33,7 +41,7 @@ export function calculateExpression(expression: string): number | null {
         values.push(left + right);
         break;
 
-      case "-":
+      case "−":
         values.push(left - right);
         break;
 
@@ -48,6 +56,17 @@ export function calculateExpression(expression: string): number | null {
 
         values.push(left / right);
         break;
+
+      case "%":
+        if (right === 0) {
+          return false;
+        }
+
+        values.push(left % right);
+        break;
+
+      default:
+        return false;
     }
 
     return true;
@@ -56,6 +75,7 @@ export function calculateExpression(expression: string): number | null {
   for (const token of tokens) {
     if (!Number.isNaN(Number(token))) {
       values.push(Number(token));
+
       continue;
     }
 
