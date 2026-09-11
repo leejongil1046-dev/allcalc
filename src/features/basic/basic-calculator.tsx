@@ -69,23 +69,30 @@ export default function BasicCalculator() {
       return;
     }
 
+    const removeTrailingDecimal = (value: string) => {
+      return value.endsWith(".") ? value.slice(0, -1) : value;
+    };
+
     if (value === "=") {
       if (!expression || isCalculated) {
         return;
       }
 
-      const lastCharacter = expression.at(-1);
+      const normalizedExpression = removeTrailingDecimal(expression);
+
+      const lastCharacter = normalizedExpression.at(-1);
 
       if (lastCharacter && operators.includes(lastCharacter)) {
         return;
       }
 
-      const calculated = calculateExpression(expression);
+      const calculated = calculateExpression(normalizedExpression);
 
       if (calculated === null) {
         return;
       }
 
+      setExpression(normalizedExpression);
       setResult(String(calculated));
       setIsCalculated(true);
 
@@ -105,15 +112,17 @@ export default function BasicCalculator() {
         return;
       }
 
-      const lastCharacter = expression.at(-1);
+      const normalizedExpression = removeTrailingDecimal(expression);
+
+      const lastCharacter = normalizedExpression.at(-1);
 
       if (lastCharacter && operators.includes(lastCharacter)) {
-        setExpression(`${expression.slice(0, -1)}${value}`);
+        setExpression(`${normalizedExpression.slice(0, -1)}${value}`);
 
         return;
       }
 
-      setExpression((current) => `${current}${value}`);
+      setExpression(`${normalizedExpression}${value}`);
 
       return;
     }
@@ -144,10 +153,25 @@ export default function BasicCalculator() {
       return;
     }
 
+    if (value === "±") {
+      toggleSign();
+      return;
+    }
+
     if (isCalculated) {
       setExpression(value);
       setResult("");
       setIsCalculated(false);
+
+      return;
+    }
+
+    const negativeMatch = expression.match(/\(-(\d+(?:\.\d+)?)\)$/);
+
+    if (negativeMatch) {
+      setExpression(
+        `${expression.slice(0, negativeMatch.index)}(-${negativeMatch[1]}${value})`,
+      );
 
       return;
     }
@@ -159,11 +183,6 @@ export default function BasicCalculator() {
     if (currentNumber === "0") {
       setExpression(`${expression.slice(0, -1)}${value}`);
 
-      return;
-    }
-
-    if (value === "±") {
-      toggleSign();
       return;
     }
 
